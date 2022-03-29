@@ -1,0 +1,40 @@
+version: '3'
+services:
+  influxdb:
+    image: influxdb:2.0
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=test
+      - DOCKER_INFLUXDB_INIT_PASSWORD=test
+      - DOCKER_INFLUXDB_INIT_ORG=my-org
+      - DOCKER_INFLUXDB_INIT_BUCKET=my-bucket
+      - DOCKER_INFLUXDB_INIT_RETENTION=1w
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
+    volumes:
+      # Mount for influxdb data directory and configuration
+      - ./data/var/lib/influxdb2:/var/lib/influxdb2 
+      - ./data/etc/influxdb2:/etc/influxdb2
+    ports:
+      - 8086:8086
+    container_name: influxdb
+  telegraf:
+    image: telegraf
+    links:
+      - influxdb
+    volumes:
+      # Mount for telegraf config
+      - ./data/etc/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf
+    depends_on:
+      - influxdb
+    container_name: telegraf
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+      - 7777:7777
+    volumes:
+      - ./data/var/lib/grafana:/var/lib/grafana
+    depends_on:
+      - influxdb
+    container_name: grafana
